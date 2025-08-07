@@ -1,23 +1,100 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
+# KShare
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+A simple Kotlin Multiplatform library to share text and files using the native share dialogs on
+Android and iOS. Integrates smoothly with Compose Multiplatform.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+---
 
+## Features
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+* Share plain text and files easily.
+* Supports sharing by file bytes or file path.
+* Compose-friendly API with `LocalContentSharer` and `ProvideContentSharer`.
+* Native implementation using Android `Intent.ACTION_SEND` and iOS `UIActivityViewController`.
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+---
 
-You can open the web application by running the `:composeApp:wasmJsBrowserDevelopmentRun` Gradle task.
+## Installation
+
+Add the library to your KMP project dependencies.
+
+---
+
+## Usage
+
+### Setup provider in your Compose hierarchy
+
+```kotlin
+@Composable
+fun App() {
+    ProvideContentSharer{
+        YourAppContent()
+    }
+}
+```
+
+### Share text example
+
+```kotlin
+val contentSharer = LocalContentSharer.current
+
+Button(onClick = {
+    contentSharer.shareText(
+        "Stop the attacks on Gaza!\nTake action for Palestine",
+        "Share Your Support for Gaza"
+    )
+}) {
+    Text("Share Text")
+}
+```
+
+### Share file example
+
+```kotlin
+val contentSharer = LocalContentSharer.current
+
+val fileBytes: ByteArray = // load your file bytes here
+    contentSharer.shareFile("document.pdf", fileBytes, "application/pdf", "Share File")
+```
+
+---
+
+## Android Setup
+
+Add this to your app’s `AndroidManifest.xml`:
+
+```xml
+
+<provider android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider" android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
+```
+
+Create `res/xml/file_paths.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="cache" path="." />
+</paths>
+```
+
+---
+
+## Notes
+
+* The library requires the host app to configure `FileProvider`.
+* On iOS, pass the current `UIViewController` to `ContentSharer`.
+* Supports Compose Multiplatform seamlessly.
+
+---
+
+## License
+
+MIT License
+
+---
+
